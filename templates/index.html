@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Peixe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* RESET BÁSICO */
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        body { background-color: #eef2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #333; padding: 20px; }
+        
+        /* CONTAINER PRINCIPAL */
+        .container { width: 100%; max-width: 420px; background-color: #ffffff; padding: 40px 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); transition: max-width 0.3s ease; }
+        
+        /* CONTROLE DE EXIBIÇÃO */
+        .tela { display: none; }
+        .tela.ativa { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TÍTULOS E LABELS */
+        h2 { text-align: center; font-size: 22px; font-weight: 700; color: #0056b3; margin-bottom: 25px; }
+        label { display: block; text-align: left; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; margin-top: 15px; }
+        input, select { width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc; border-radius: 8px; outline: none; background-color: #fafafa; transition: all 0.2s ease; }
+        input:focus, select:focus { border-color: #007bff; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+
+        /* BOTÕES */
+        button { display: block; width: 100%; padding: 14px; font-size: 15px; font-weight: 600; text-align: center; border: none; border-radius: 8px; background-color: #007bff; color: white; cursor: pointer; margin-top: 25px; transition: 0.2s ease; }
+        button:hover { background-color: #0056b3; }
+        .btn-secundario { background-color: transparent; color: #007bff; border: 1px solid #007bff; margin-top: 10px; }
+        .btn-secundario:hover { background-color: #f0f8ff; }
+        .botoes-lado-a-lado { display: flex; gap: 15px; }
+        .botoes-lado-a-lado button { margin-top: 20px; }
+        .btn-sair { margin-top: 0; margin-bottom: 20px; padding: 8px 15px; width: auto; font-size: 13px; background-color: #dc3545; display: inline-block; }
+        .btn-sair:hover { background-color: #b02a37; }
+        .centro { text-align: center; }
+
+        /* ==================== ESTILOS DO DASHBOARD ==================== */
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .dash-header h2 { margin-bottom: 0; }
+        .dash-header button { margin-top: 0; width: auto; padding: 8px 20px; }
+        
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { background-color: #f8f9fa; border-left: 5px solid #007bff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 14px; color: #666; font-weight: 600; margin-bottom: 5px; }
+        .card p { font-size: 28px; font-weight: 700; color: #333; }
+        .card-verde { border-left-color: #28a745; }
+        .card-laranja { border-left-color: #fd7e14; }
+
+        .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .grafico-box { background: white; border: 1px solid #eee; border-radius: 8px; padding: 15px; }
+        
+        .tabela-container { max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th { background-color: #007bff; color: white; padding: 12px; position: sticky; top: 0; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f1f1f1; }
+
+        /* Responsividade para telas menores */
+        @media (max-width: 768px) { .graficos { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="main-container">
+        
+        <div id="tela-login" class="tela ativa">
+            <h2>Sistema Peixe</h2>
+            <label>E-mail</label>
+            <input type="email" id="login-email" placeholder="Digite seu e-mail">
+            <label>Senha</label>
+            <input type="password" id="login-senha" placeholder="Digite sua senha">
+            <button onclick="fazerLogin()">Entrar</button>
+        </div>
+
+        <div id="tela-cadastro" class="tela">
+            <h2>Novo Administrador</h2>
+            <label>Nome Completo</label>
+            <input type="text" id="cad-nome" placeholder="Ex: João Silva">
+            <label>E-mail</label>
+            <input type="email" id="cad-email" placeholder="email@exemplo.com">
+            <label>Senha</label>
+            <input type="password" id="cad-senha" placeholder="Crie uma senha">
+            <label>Repetir Senha</label>
+            <input type="password" id="cad-rep-senha" placeholder="Confirme a senha">
+            <div class="botoes-lado-a-lado">
+                <button class="btn-secundario" onclick="mudarTela('tela-login')">Voltar</button>
+                <button onclick="cadastrarAdmin()">Confirmar</button>
+            </div>
+        </div>
+
+        <div id="tela-gerenciamento" class="tela">
+            <div class="centro">
+                <button class="btn-sair" onclick="fazerLogout()">Sair da Conta</button>
+            </div>
+            
+            <h2>Gerenciar Entrega</h2>
+            
+            <label>CPF do Cidadão</label>
+            <input type="text" id="ger-cpf" placeholder="Apenas números" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+            
+            <label>Local de Cadastro</label>
+            <select id="ger-local-cadastro">
+               <option value="Açude Novo">Açude Novo</option>
+<option value="Armazém">Armazém</option>
+<option value="Barro Branco">Barro Branco</option>
+<option value="Basilio">Basilio</option>
+<option value="Caíbras">Caíbras</option>
+<option value="CRAS Antônio Matias">CRAS Antônio Matias</option>
+<option value="CRAS Santo Afonso">CRAS Santo Afonso</option>
+<option value="CREAS">CREAS</option>
+<option value="Espirito Santo">Espirito Santo</option>
+<option value="Escola Mônica Braga">Escola Mônica Braga</option>
+<option value="Escola Paulo Cordeiro">Escola Paulo Cordeiro</option>
+<option value="Furnas">Furnas</option>
+<option value="Gama">Gama</option>
+<option value="Impoeira">Impoeira</option>
+<option value="Jurubeba">Jurubeba</option>
+<option value="Maniçoba dos Soares">Maniçoba dos Soares</option>
+<option value="Minador">Minador</option>
+<option value="Passagem">Passagem</option>
+<option value="Pimenta">Pimenta</option>
+<option value="Primavera">Primavera</option>
+<option value="Queimada Grande">Queimada Grande</option>
+<option value="Riacho das Porteiras">Riacho das Porteiras</option>
+<option value="Serrote">Serrote</option>
+<option value="Sodre">Sodre</option>
+<option value="Tamanduá">Tamanduá</option>
+<option value="Tatu">Tatu</option>
+<option value="Una do Simão">Una do Simão</option>
+            </select>
+            
+            <label>Local de Retirada</label>
+            <select id="ger-local-retirada">
+<option value="Açude Novo">Açude Novo</option>
+<option value="Armazém">Armazém</option>
+<option value="Assistencia Social">Assistencia Social</option>
+<option value="Baixa">Baixa</option>
+<option value="Barro Branco">Barro Branco</option>
+<option value="Basílio">Basílio</option>
+<option value="Batalha">Batalha</option>
+<option value="Caiana">Caiana</option>
+<option value="Caibras">Caibras</option>
+<option value="Caldeirãozinho">Caldeirãozinho</option>
+<option value="Calumbi">Calumbi</option>
+<option value="CRAS Antônio Matias">CRAS Antônio Matias</option>
+<option value="CRAS Santo Afonso">CRAS Santo Afonso</option>
+<option value="Escola Mônica Braga">Escola Mônica Braga</option>
+<option value="Escola Paulo Cordeiro">Escola Paulo Cordeiro</option>
+<option value="Espírito Santo">Espírito Santo</option>
+<option value="Furnas">Furnas</option>
+<option value="Gama">Gama</option>
+<option value="Impoeira">Impoeira</option>
+<option value="Jurubeba">Jurubeba</option>
+<option value="Maniçoba dos Soares">Maniçoba dos Soares</option>
+<option value="Minador">Minador</option>
+<option value="Odete Costa">Odete Costa</option>
+<option value="Passagem">Passagem</option>
+<option value="Pimenta">Pimenta</option>
+<option value="Poço Comprido">Poço Comprido</option>
+<option value="Primavera">Primavera</option>
+<option value="Queimada Grande">Queimada Grande</option>
+<option value="Riachão de Serra Verde">Riachão de Serra Verde</option>
+<option value="Riacho das Porteiras">Riacho das Porteiras</option>
+<option value="Serrote">Serrote</option>
+<option value="Sodré">Sodré</option>
+<option value="Tamanduá">Tamanduá</option>
+<option value="Tatu">Tatu</option>
+<option value="Una do Simão">Una do Simão</option>
+<option value="Zé Bento">Zé Bento</option>
+            </select>
+            
+            <button onclick="registrarPeixe()">Validar e Registrar</button>
+            
+            <button class="btn-secundario" onclick="abrirDashboard()">📊 Ver Painel de Informações</button>
+        </div>
+
+        <div id="tela-dashboard" class="tela">
+            <div class="dash-header">
+                <h2>Painel Geral</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-secundario" style="margin-top: 0; padding: 8px 15px; width: auto;" onclick="baixarRelatorio()">📥 Baixar Planilha</button>
+                    <button class="btn-secundario" style="margin-top: 0; padding: 8px 15px; width: auto;" onclick="mudarTela('tela-gerenciamento')">← Voltar</button>
+                </div>
+            </div>
+
+            <div class="cards">
+                <div class="card">
+                    <h3>Total de Entregas</h3>
+                    <p id="dash-total">0</p>
+                </div>
+                <div class="card card-verde">
+                    <h3>Local com + Cadastros</h3>
+                    <p id="dash-top-cadastro">-</p>
+                </div>
+                <div class="card card-laranja">
+                    <h3>Local com + Retiradas</h3>
+                    <p id="dash-top-retirada">-</p>
+                </div>
+            </div>
+
+            <div class="graficos">
+                <div class="grafico-box">
+                    <canvas id="graficoCadastro"></canvas>
+                </div>
+                <div class="grafico-box">
+                    <canvas id="graficoRetirada"></canvas>
+                </div>
+            </div>
+
+            <h3>Histórico Recente (Últimas 50 entregas)</h3>
+            <br>
+            <div class="tabela-container">
+                <table id="tabela-registros">
+                    <thead>
+                        <tr>
+                            <th>CPF</th>
+                            <th>Cód. Família</th>
+                            <th>Cadastro</th>
+                            <th>Retirada</th>
+                            <th>Atendente</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Variável global para lembrar quem fez o login
+        let adminLogado = ""; 
+        
+        // Variáveis para guardar os gráficos
+        let chartCadastro = null;
+        let chartRetirada = null;
+
+        function mudarTela(idTelaDestino) {
+            document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+            document.getElementById(idTelaDestino).classList.add('ativa');
+            
+            const container = document.getElementById('main-container');
+            if(idTelaDestino === 'tela-dashboard') {
+                container.style.maxWidth = '900px';
+            } else {
+                container.style.maxWidth = '420px';
+            }
+        }
+
+        // Adicionada a função para limpar o login ao sair
+        function fazerLogout() {
+            adminLogado = ""; 
+            mudarTela('tela-login');
+        }
+
+        async function fazerLogin() {
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            if (!email || !senha) return alert("Digite e-mail e senha!");
+            
+            const res = await fetch('/login', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ email, senha }) 
+            });
+            const data = await res.json();
+            
+            if (data.status === "sucesso") {
+                adminLogado = data.email; // SALVA O EMAIL DO ATENDENTE AQUI
+                mudarTela('tela-gerenciamento');
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-senha').value = '';
+            } else {
+                alert(data.mensagem);
+            }
+        }
+
+        async function cadastrarAdmin() {
+            const nome = document.getElementById('cad-nome').value;
+            const email = document.getElementById('cad-email').value;
+            const senha = document.getElementById('cad-senha').value;
+            const repSenha = document.getElementById('cad-rep-senha').value;
+            
+            if (!nome || !email || !senha) return alert("Preencha tudo!");
+            if (senha !== repSenha) return alert("Senhas não coincidem!");
+            
+            const res = await fetch('/cadastrar_admin', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ nome, email, senha }) 
+            });
+            const data = await res.json();
+            
+            alert(data.mensagem);
+            if (data.status === "sucesso") mudarTela('tela-login');
+        }
+
+        async function registrarPeixe() {
+            const cpf = document.getElementById('ger-cpf').value;
+            const localCadastro = document.getElementById('ger-local-cadastro').value;
+            const localRetirada = document.getElementById('ger-local-retirada').value;
+            
+            if (cpf.length !== 11) return alert("CPF precisa ter 11 números!");
+            if (!localCadastro || !localRetirada) return alert("Selecione os locais!");
+            
+            const btn = document.querySelector('#tela-gerenciamento button');
+            const txt = btn.innerText; 
+            btn.innerText = "Consultando..."; 
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/registrar_peixe', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        cpf: cpf, 
+                        local_cadastro: localCadastro, 
+                        local_retirada: localRetirada,
+                        admin: adminLogado // ENVIA O ATENDENTE PARA O PYTHON
+                    }) 
+                });
+                const data = await res.json();
+                
+                alert(data.mensagem);
+                
+                if (data.status === "sucesso") {
+                    document.getElementById('ger-cpf').value = '';
+                    document.getElementById('ger-local-cadastro').value = '';
+                    document.getElementById('ger-local-retirada').value = '';
+                }
+            } catch (e) { 
+                alert("Erro de conexão com o servidor."); 
+            } finally { 
+                btn.innerText = txt; 
+                btn.disabled = false; 
+            }
+        }
+
+        async function abrirDashboard() {
+            mudarTela('tela-dashboard');
+            
+            try {
+                const resposta = await fetch('/dados_dashboard');
+                const dados = await resposta.json();
+
+                if(dados.status === "erro") {
+                    alert("Erro ao carregar dados: " + dados.mensagem);
+                    return;
+                }
+
+                document.getElementById('dash-total').innerText = dados.total;
+                
+                const getTop = (obj) => Object.keys(obj).length ? Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b) : '-';
+                
+                document.getElementById('dash-top-cadastro').innerText = getTop(dados.cadastro_counts);
+                document.getElementById('dash-top-retirada').innerText = getTop(dados.retirada_counts);
+
+                const tbody = document.querySelector('#tabela-registros tbody');
+                tbody.innerHTML = ''; 
+                
+                dados.registros.forEach(reg => {
+                    const linha = `<tr>
+                        <td>${reg.cpf}</td>
+                        <td>${reg.cadastroFamilia}</td>
+                        <td>${reg.local_cadastro}</td>
+                        <td>${reg.local_retirada}</td>
+                        <td>${reg.admin_responsavel || '-'}</td>
+                        <td>${reg.data_hora}</td>
+                    </tr>`;
+                    tbody.innerHTML += linha;
+                });
+
+                desenharGraficos(dados.cadastro_counts, dados.retirada_counts);
+
+            } catch (erro) {
+                console.error(erro);
+                alert("Erro ao carregar o dashboard.");
+            }
+        }
+
+        function desenharGraficos(cadastroDados, retiradaDados) {
+            if (chartCadastro) chartCadastro.destroy();
+            if (chartRetirada) chartRetirada.destroy();
+
+            const ctxCad = document.getElementById('graficoCadastro').getContext('2d');
+            chartCadastro = new Chart(ctxCad, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(cadastroDados),
+                    datasets: [{
+                        label: 'Qtd de Cadastros',
+                        data: Object.values(cadastroDados),
+                        backgroundColor: '#007bff',
+                        borderRadius: 5
+                    }]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Cadastros por Local' } } }
+            });
+
+            const ctxRet = document.getElementById('graficoRetirada').getContext('2d');
+            chartRetirada = new Chart(ctxRet, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(retiradaDados),
+                    datasets: [{
+                        data: Object.values(retiradaDados),
+                        backgroundColor: ['#28a745', '#fd7e14', '#ffc107', '#17a2b8', '#6f42c1', '#e83e8c', '#20c997']
+                    }]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Locais de Retirada Escolhidos' } } }
+            });
+        }
+
+        function baixarRelatorio() {
+            window.location.href = '/exportar_csv';
+        }
+    </script>
+
+</body>
+</html>
