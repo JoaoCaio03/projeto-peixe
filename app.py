@@ -5,8 +5,8 @@ from psycopg2 import IntegrityError
 import io
 import time
 from datetime import datetime, timedelta, timezone
-import os 
-from dotenv import load_dotenv  
+import os
+from dotenv import load_dotenv
 
 # Carrega o "cofre" se estiver rodando no seu computador
 load_dotenv()
@@ -122,8 +122,8 @@ def registrar_peixe():
         else:
             renda_media = float(str(renda_bruta).replace(',', '.'))
 
-        if renda_media > 500:
-            return jsonify({"status": "erro", "mensagem": f"❌ Bloqueado: A renda familiar (R$ {renda_media:.2f}) ultrapassa o limite permitido de R$ 500,00."})
+        if renda_media > 1621:
+            return jsonify({"status": "erro", "mensagem": f"❌ Bloqueado: A renda familiar (R$ {renda_media:.2f}) ultrapassa o limite permitido."})
 
         cod_familiar = str(resultado.iloc[0][coluna_familia])
 
